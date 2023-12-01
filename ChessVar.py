@@ -15,6 +15,10 @@ class ChessVar:
     It will communicate with the children of the ChessPiece class to determine different aspects of a
     specific chess piece, such as the chess pieces name and if the attempted move is legal or not.
 
+    Known ways to improve: 1. Make _piece_dict keys the same chess piece objects that are in the board. Then checking if
+                           each pieces count is greater than 1 could be less jerry rigged and would still work if you
+                           were to change the amount of pieces on the board.
+
     _piece_dict: represents all the pieces left on the board. Once a specific pieces count has dropped to 0, the
                  opposing player has won
     _game_state: represents if the game is still active or once a player has won, who won the game
@@ -36,7 +40,7 @@ class ChessVar:
              Pawn("BLACK")],
 
             [None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None],
+            [Rook("WHITE"), None, None, None, None, None, None, King("BLACK")],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
 
@@ -66,6 +70,12 @@ class ChessVar:
         """
         return self._piece_dict
 
+    def get_board(self):
+        """
+        :return: the _board data member (list of lists)
+        """
+        return self._board
+
     def del_piece(self, square):
         """
         Deletes a piece from the chess boards dictionary of pieces left on the board.
@@ -82,8 +92,8 @@ class ChessVar:
     def make_move(self, start, end):
         """
         First checks if a player has won the game. Then checks if there is a piece in the starting square. Then checks
-        if the piece in the starting square is the opponents color. Then checks if the move is legal. Then checks if
-        there are any obstructions. If any of these occur we return False.
+        if the starting and ending squares are the same. Then checks if the piece in the starting square is the
+        opponents color. Then checks if the move is illegal. If any of these occur we return False.
 
         If we pass all of those tests, then we make the move and return True. If an opposing piece is occupying the end
         square, that piece is captured. When a piece is captured we decrement its count from the boards _piece_dict data
@@ -103,16 +113,17 @@ class ChessVar:
         if start_piece is None:
             return False
 
+        # checks if the starting square and ending square are the same
+        if start == end:
+            return False
+
         # check if the piece is the right color
         if start_piece.get_color() != self._turn:
             return False
 
-        # check if move is legal
-        if not start_piece.is_move_legal(start, end):
+        # check if move is legal (also checks for obstructions excluding end location)
+        if not start_piece.is_move_legal(self._board, start, end):
             return False
-
-        # check if any obstructions, excluding end location (except for knight (and king??)) :TODO
-
 
         # check final location for a piece.
         indices_end = algebra_indices(end)  # looks like [x, y]
@@ -136,7 +147,17 @@ class ChessVar:
         else:
             self._turn = "WHITE"
 
+        # check if anyone won
+        black_pieces = ['K', 'Q', 'R', 'B', 'N', 'P']
+        white_pieces = ['k', 'q', 'r', 'b', 'n', 'p']
+        for piece in black_pieces:
+            if self._piece_dict[piece] == 0:
+                self._game_state = "WHITE_WON"
+        for piece in white_pieces:
+            if self._piece_dict[piece] == 0:
+                self._game_state = "BLACK_WON"
 
+        return True
 
     def show_board(self):
         """
@@ -177,6 +198,9 @@ class ChessPiece:
     The point of having this parent class is to not have to write each get method for the child classes. Also, because
     each piece has different allowed moves, the is_move_legal method will work differently for each class but will
     always return True or False. This allows us to use polymorphism when checking if a pieces attempted move is legal.
+
+    Known ways to improve: 1. Pass each child classes is_move_legal method the already converted algebraic notation ->
+                           indices. This would make us only have to run algebra_indices once per move.
     """
     def __init__(self, color):
         self._name = None  # will be overriden by child
@@ -212,19 +236,27 @@ class King(ChessPiece):
     """
     A King class that is a child of the ChessPiece class. Used to represent the king piece and it's attributes.
 
-    MOVES: can move one square in any direction. like a furnace in minecraft.
+    MOVES: Can move one square in any direction including diagonally.
+        Note: Cannot be obstructed.
     """
     def __init__(self, color):
         super().__init__(color)
         self._name = "K" if color == "BLACK" else "k"
 
-    def is_move_legal(self, start, end):
+    def is_move_legal(self, board, start, end):
         """
         returns True if the move is legal, returns False if it is not.
 
+        :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in algebraic notation as a string
         :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :return: True if move is legal, False if not.
         """
+        start_indices = algebra_indices(start)
+        end_indices = algebra_indices(end)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
+
         return True
 
 
@@ -232,19 +264,26 @@ class Queen(ChessPiece):
     """
     A Queen class that is a child of the ChessPiece class. Used to represent the Queen piece and it's attributes.
 
-    MOVES: straight up and down OR diagonally. as far as she wants
+    MOVES: Straight up and down, left to right, or diagonally. As far as desired.
     """
     def __init__(self, color):
         super().__init__(color)
         self._name = "Q" if color == "BLACK" else "q"
 
-    def is_move_legal(self, start, end):
+    def is_move_legal(self, board, start, end):
         """
         returns True if the move is legal, returns False if it is not.
 
+        :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in algebraic notation as a string
         :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :return: True if move is legal, False if not.
         """
+        start_indices = algebra_indices(start)
+        end_indices = algebra_indices(end)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
+
         return True
 
 
@@ -252,19 +291,58 @@ class Rook(ChessPiece):
     """
     A Rook class that is a child of the ChessPiece class. Used to represent a Rook piece and it's attributes.
 
-    MOVES: Straight up and down or left to right. as far as he wants
+    MOVES: Straight up and down or left to right. As far as desired.
     """
     def __init__(self, color):
         super().__init__(color)
         self._name = "R" if color == "BLACK" else "r"
 
-    def is_move_legal(self, start, end):
+    def is_move_legal(self, board, start, end):
         """
-        returns True if the move is legal, returns False if it is not.
+        We first determine if we are trying to move vertically or horizontally. If we are trying to do both, we return
+        False. If we are trying to move vertically we check every square between the start and end to see if there is an
+        object there. If there is an object in any square the move is not valid and we return False. We do the same if
+        we are trying to move horizontally. If there are no objects in our path, we return True.
 
+        :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in algebraic notation as a string
         :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :return: True if move is legal, False if not.
         """
+        start_indices = algebra_indices(start)
+        end_indices = algebra_indices(end)
+
+        x1, x2 = start_indices[1], end_indices[1]
+        y1, y2 = end_indices[0], start_indices[0]
+
+        if x1 > x2:
+            x1, x2 = x2, x1  # have to swap for range() to work
+        if y1 > y2:
+            y1, y2 = y2, y1
+
+        between_x = list(range(x1 + 1, x2))  # list of x values between our starting and ending x
+        between_y = list(range(y1 + 1, y2))
+
+        # if we are trying to move both vertically and horizontally
+        if len(between_x) > 0 and len(between_y) > 0:
+            return False
+
+        # if we are trying to move horizontally
+        if len(between_x) != 0:
+            for x in between_x:  # we want to exclude the current and last square
+                if board[start_indices[0]][x] is None:
+                    pass
+                else:
+                    return False
+
+        # if we are trying to move vertically
+        else:
+            for y in between_y:  # we want to exclude the current last square
+                if board[y][start_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
         return True
 
 
@@ -272,19 +350,26 @@ class Bishop(ChessPiece):
     """
     A Bishop class that is a child of the ChessPiece class. Used to represent a Bishop piece and it's attributes.
 
-    MOVES: only diagonally. as far as he wants
+    MOVES: Only diagonally. As far as desired.
     """
     def __init__(self, color):
         super().__init__(color)
         self._name = "B" if color == "BLACK" else "b"
 
-    def is_move_legal(self, start, end):
+    def is_move_legal(self, board, start, end):
         """
         returns True if the move is legal, returns False if it is not.
 
+        :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in algebraic notation as a string
         :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :return: True if move is legal, False if not.
         """
+        start_indices = algebra_indices(start)
+        end_indices = algebra_indices(end)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
+
         return True
 
 
@@ -292,20 +377,27 @@ class Knight(ChessPiece):
     """
     A Knight class that is a child of the ChessPiece class. Used to represent a Knight piece and it's attributes.
 
-    MOVES: "like a capital L". Two squares one direction, one to the side. EX: two down one left.
-        NOTE: can "jump" over another piece.
+    MOVES: "Like a capital L". Two squares in one direction, one to the other. EX: Two down and one left.
+        NOTE: Cannot be obstructed.
     """
     def __init__(self, color):
         super().__init__(color)
         self._name = "N" if color == "BLACK" else "n"
 
-    def is_move_legal(self, start, end):
+    def is_move_legal(self, board, start, end):
         """
         returns True if the move is legal, returns False if it is not.
 
+        :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in algebraic notation as a string
         :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :return: True if move is legal, False if not.
         """
+        start_indices = algebra_indices(start)
+        end_indices = algebra_indices(end)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
+
         return True
 
 
@@ -314,20 +406,27 @@ class Pawn(ChessPiece):
     A Pawn class that is a child of the ChessPiece class. Used to represent a Pawn piece and it's attributes.
 
     MOVES: Can move one square forward, never backward.
-        NOTE: on first move, can move two or one squares forward.
-        NOTE: ONLY captures diagonally. cannot capture if the square in front is occupied
+        NOTE: On first move, can move two or one squares forward.
+        NOTE: Only captures diagonally. Cannot capture if the square in front is occupied.
     """
     def __init__(self, color):
         super().__init__(color)
         self._name = "P" if color == "BLACK" else "p"
 
-    def is_move_legal(self, start, end):
+    def is_move_legal(self, board, start, end):
         """
         returns True if the move is legal, returns False if it is not.
 
+        :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in algebraic notation as a string
         :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :return: True if move is legal, False if not.
         """
+        start_indices = algebra_indices(start)
+        end_indices = algebra_indices(end)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
+
         return True
 
 
@@ -358,9 +457,10 @@ print(game.get_turn())
 print('')
 print(game.get_piece_dict())
 print('')
-game.make_move("a1", "a7")
+print(game.make_move("a5", "b5"))
 print('')
 game.show_board()
 print(game.get_turn())
 print('')
 print(game.get_piece_dict())
+print(game.get_game_state())
