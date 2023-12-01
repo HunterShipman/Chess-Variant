@@ -15,8 +15,31 @@ class ChessVar:
     It will communicate with the children of the ChessPiece class to determine different aspects of a
     specific chess piece, such as what pieces each piece is allowed to capture and what moves it is allowed to make.
     """
-    def __init__(self, w_dict, b_dict, game_state, turn, board):
-        pass
+    def __init__(self):
+        self._piece_dict = {'K': 1, 'Q': 1, 'R': 2, 'B': 2, 'N': 2, 'P': 8, 'k': 1, 'q': 1, 'r': 2, 'b': 2, 'n': 2,
+                            'p': 8,}
+        self._game_state = "UNFINISHED"
+        self._turn = "WHITE"
+        self._board = [
+
+            [Rook("BLACK"), Knight("BLACK"), Bishop("BLACK"), Queen("BLACK"), King("BLACK"), Bishop("BLACK"),
+             Knight("BLACK"), Rook("BLACK")],
+
+            [Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"),
+             Pawn("BLACK")],
+
+            [None, None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None],
+
+            [Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"),
+             Pawn("WHITE")],
+
+            [Rook("WHITE"), Knight("WHITE"), Bishop("WHITE"), Queen("WHITE"), King("WHITE"), Bishop("WHITE"),
+             Knight("WHITE"), Rook("WHITE")]
+
+        ]
 
     def get_game_state(self):
         """
@@ -24,11 +47,35 @@ class ChessVar:
         """
         pass
 
-    def make_move(self, start, finish):
+    def make_move(self, start, end):
         """
-
+        First checks if move is allowed to be made. If a move is legal, then we make the move. If an opposing piece is
+        occupying the end square, that piece is captured.
         """
         pass
+
+    def show_board(self):
+        """
+        Prints out the current state of the board
+
+        Capital letters are black pieces and lowercase letters are white pieces.
+        R = Rook, N = Knight, B = Bishop, Q = Queen, K = King, P = Pawn.
+        """
+        for x in range(32):
+            print('_', end='')
+        print('_')  # need last one to start a new line
+
+        for row in range(8):
+            for column in range(8):
+                print("| ", end='')
+                if self._board[row][column] is None:
+                    print('  ', end='')
+                else:
+                    print(self._board[row][column].get_name() + ' ', end='')
+            print('|')
+
+        for x in range(33):
+            print('‾', end='')
 
 
 class ChessPiece:
@@ -40,7 +87,6 @@ class ChessPiece:
     The point of having this parent class is to not have to write each get method for the child classes. Also, because
     each piece has different allowed moves, the is_move_legal method will work differently for each class but will
     always return True or False. This allows us to use polymorphism when checking if a pieces attempted move is legal.
-
     """
     def __init__(self, color):
         self._name = None  # will be overriden by child
@@ -79,6 +125,13 @@ class King(ChessPiece):
         super().__init__(color)
         self._name = "K" if color == "BLACK" else "k"
 
+    def is_move_legal(self, delta_x, delta_y):
+        """
+        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
+        being passed to this method
+        """
+        return True
+
 
 class Queen(ChessPiece):
     """
@@ -89,6 +142,13 @@ class Queen(ChessPiece):
     def __init__(self, color):
         super().__init__(color)
         self._name = "Q" if color == "BLACK" else "q"
+
+    def is_move_legal(self, delta_x, delta_y):
+        """
+        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
+        being passed to this method
+        """
+        return True
 
 
 class Rook(ChessPiece):
@@ -101,6 +161,13 @@ class Rook(ChessPiece):
         super().__init__(color)
         self._name = "R" if color == "BLACK" else "r"
 
+    def is_move_legal(self, delta_x, delta_y):
+        """
+        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
+        being passed to this method
+        """
+        return True
+
 
 class Bishop(ChessPiece):
     """
@@ -111,6 +178,13 @@ class Bishop(ChessPiece):
     def __init__(self, color):
         super().__init__(color)
         self._name = "B" if color == "BLACK" else "b"
+
+    def is_move_legal(self, delta_x, delta_y):
+        """
+        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
+        being passed to this method
+        """
+        return True
 
 
 class Knight(ChessPiece):
@@ -124,6 +198,13 @@ class Knight(ChessPiece):
         super().__init__(color)
         self._name = "N" if color == "BLACK" else "n"
 
+    def is_move_legal(self, delta_x, delta_y):
+        """
+        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
+        being passed to this method
+        """
+        return True
+
 
 class Pawn(ChessPiece):
     """
@@ -136,3 +217,13 @@ class Pawn(ChessPiece):
     def __init__(self, color):
         super().__init__(color)
         self._name = "P" if color == "BLACK" else "p"
+
+    def is_move_legal(self, delta_x, delta_y):
+        """
+        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
+        being passed to this method
+        """
+        return True
+
+game = ChessVar()
+game.show_board()
