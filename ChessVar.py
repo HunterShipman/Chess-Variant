@@ -14,10 +14,17 @@ class ChessVar:
 
     It will communicate with the children of the ChessPiece class to determine different aspects of a
     specific chess piece, such as what pieces each piece is allowed to capture and what moves it is allowed to make.
+
+    _piece_dict: represents all the pieces left on the board. Once a specific pieces count has dropped to 0, the
+                 opposing player has won
+    _game_state: represents if the game is still active or once a player has won, who won the game
+    _turn:       represents which players turn it is
+    _board:      represents the chess board. It is a list of 8 lists. Each list represents a row of the chess board and
+                 each lists index represents a square on that row.
     """
     def __init__(self):
         self._piece_dict = {'K': 1, 'Q': 1, 'R': 2, 'B': 2, 'N': 2, 'P': 8, 'k': 1, 'q': 1, 'r': 2, 'b': 2, 'n': 2,
-                            'p': 8,}
+                            'p': 8}
         self._game_state = "UNFINISHED"
         self._turn = "WHITE"
         self._board = [
@@ -43,14 +50,35 @@ class ChessVar:
 
     def get_game_state(self):
         """
-        returns the chess boards game state data member
+        returns the chess boards game state (can be "UNFINISHED", "WHITE_WON", or "BLACK_WON"
         """
-        pass
+        return self._game_state
+
+    def get_turn(self):
+        """
+        returns which players turn it is ("WHITE" or "BLACK")
+        """
+        return self._turn
+
+    def del_piece(self, square):
+        """
+        Deletes a piece from the chess boards dictionary of pieces left on the board.
+        MyBoard.del_piece('a5') would determine what piece is in square a5 and then decrement its count in the boards
+         _piece_dict data member
+
+        :parameter square: must be satisfied by the square in algebraic notation to delete the chess piece from.
+        """
+        indices = algebra_indices(square)
+        piece_name = self._board[indices[0]][indices[1]].get_name()
+        self._piece_dict[piece_name] = self._piece_dict[piece_name] - 1
 
     def make_move(self, start, end):
         """
         First checks if move is allowed to be made. If a move is legal, then we make the move. If an opposing piece is
-        occupying the end square, that piece is captured.
+        occupying the end square, that piece is captured. MyBoard.make_move('b2', 'a3') would move the chess piece in
+        square b2 to square a3 (provided there is a piece in b2 and the move is legal).
+
+        start and end are in algebraic notation.
         """
         pass
 
@@ -61,21 +89,27 @@ class ChessVar:
         Capital letters are black pieces and lowercase letters are white pieces.
         R = Rook, N = Knight, B = Bishop, Q = Queen, K = King, P = Pawn.
         """
-        for x in range(32):
-            print('_', end='')
-        print('_')  # need last one to start a new line
+        # prints the top "line" of the board
+        print('      a   b   c   d   e   f   g   h')
+        print('    _________________________________')
 
+        # prints the actual board and it's pieces
         for row in range(8):
+            row_list = [8, 7, 6, 5, 4, 3, 2, 1]
+            print(f'{row_list[row]}   ', end='')
+
             for column in range(8):
                 print("| ", end='')
                 if self._board[row][column] is None:
                     print('  ', end='')
                 else:
                     print(self._board[row][column].get_name() + ' ', end='')
-            print('|')
 
-        for x in range(33):
-            print('‾', end='')
+            print(f'|   {row_list[row]}')
+
+        # prints the bottom "line" of the board
+        print('    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾')
+        print('      a   b   c   d   e   f   g   h')
 
 
 class ChessPiece:
@@ -224,6 +258,28 @@ class Pawn(ChessPiece):
         being passed to this method
         """
         return True
+
+
+def algebra_indices(square):
+    """
+    Converts the given square into a list of indices to plug into the chess board. Because the representation of the
+    board for the players is in algebraic notation and the program represents the board as a list of lists, we must
+    convert the algebraic notation into indices for the boards list of lists. One thing to note is algebraic notation
+     puts the column first and the row second. This will return a list that has the row first and column second as that
+     is how the boards list of lists is used.
+
+    :parameter square: should be a string in algebraic notation.
+    :returns: the equivalent representation as a list of integers
+    EX: "d6" is returned as [2, 3]
+    """
+    temp_list = [7, 6, 5, 4, 3, 2, 1, 0]
+    new_square = list(square)
+    new_square[0] = ord(new_square[0]) - 97
+    new_square[1] = temp_list[int(new_square[1]) - 1]
+    new_square[0], new_square[1] = new_square[1], new_square[0]
+
+    return new_square
+
 
 game = ChessVar()
 game.show_board()
