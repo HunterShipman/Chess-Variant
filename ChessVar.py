@@ -13,7 +13,7 @@ class ChessVar:
     This class will be used to play the (derivative) game of chess.
 
     It will communicate with the children of the ChessPiece class to determine different aspects of a
-    specific chess piece, such as what pieces each piece is allowed to capture and what moves it is allowed to make.
+    specific chess piece, such as the chess pieces name and if the attempted move is legal or not.
 
     _piece_dict: represents all the pieces left on the board. Once a specific pieces count has dropped to 0, the
                  opposing player has won
@@ -50,37 +50,93 @@ class ChessVar:
 
     def get_game_state(self):
         """
-        returns the chess boards game state (can be "UNFINISHED", "WHITE_WON", or "BLACK_WON"
+        :return: the chess boards game state (can be "UNFINISHED", "WHITE_WON", or "BLACK_WON"
         """
         return self._game_state
 
     def get_turn(self):
         """
-        returns which players turn it is ("WHITE" or "BLACK")
+        :return: which players turn it is ("WHITE" or "BLACK")
         """
         return self._turn
+
+    def get_piece_dict(self):
+        """
+        :return: the piece_dict dictionary
+        """
+        return self._piece_dict
 
     def del_piece(self, square):
         """
         Deletes a piece from the chess boards dictionary of pieces left on the board.
         MyBoard.del_piece('a5') would determine what piece is in square a5 and then decrement its count in the boards
-         _piece_dict data member
+        _piece_dict data member.
+        NOTE: does not remove a piece from the board.
 
         :parameter square: must be satisfied by the square in algebraic notation to delete the chess piece from.
         """
-        indices = algebra_indices(square)
+        indices = algebra_indices(square)  # looks like [x, y]
         piece_name = self._board[indices[0]][indices[1]].get_name()
         self._piece_dict[piece_name] = self._piece_dict[piece_name] - 1
 
     def make_move(self, start, end):
         """
-        First checks if move is allowed to be made. If a move is legal, then we make the move. If an opposing piece is
-        occupying the end square, that piece is captured. MyBoard.make_move('b2', 'a3') would move the chess piece in
-        square b2 to square a3 (provided there is a piece in b2 and the move is legal).
+        First checks if a player has won the game. Then checks if there is a piece in the starting square. Then checks
+        if the piece in the starting square is the opponents color. Then checks if the move is legal. Then checks if
+        there are any obstructions. If any of these occur we return False.
 
-        start and end are in algebraic notation.
+        If we pass all of those tests, then we make the move and return True. If an opposing piece is occupying the end
+        square, that piece is captured. When a piece is captured we decrement its count from the boards _piece_dict data
+        member and replace it on the board with the capturing piece. If doing so makes the specific pieces count 0, then
+        the player whose turn it is will have won and the boards _game_state will be changed to reflect that.
+
+        :parameter start: the square containing the piece we want to move in algebraic notation as a string
+        :parameter end: the square we want to move the piece to in algebraic notation as a string
         """
-        pass
+        # check game state
+        if self._game_state != "UNFINISHED":
+            return False
+
+        # check if there is a piece in the square
+        indices_start = algebra_indices(start)  # looks like [x, y]
+        start_piece = self._board[indices_start[0]][indices_start[1]]
+        if start_piece is None:
+            return False
+
+        # check if the piece is the right color
+        if start_piece.get_color() != self._turn:
+            return False
+
+        # check if move is legal
+        if not start_piece.is_move_legal(start, end):
+            return False
+
+        # check if any obstructions, excluding end location (except for knight (and king??)) :TODO
+
+
+        # check final location for a piece.
+        indices_end = algebra_indices(end)  # looks like [x, y]
+        end_piece = self._board[indices_end[0]][indices_end[1]]
+        if end_piece is None:  # if no piece, skip
+            pass
+        else:
+            if end_piece.get_color() == self._turn:  # if end square has a piece of the players own color
+                return False
+            else:  # if end square is opponents color
+                piece_name = end_piece.get_name()
+                self._piece_dict[piece_name] -= 1
+
+        # move piece
+        self._board[indices_end[0]][indices_end[1]] = start_piece
+        self._board[indices_start[0]][indices_start[1]] = None
+
+        # change whose turn it is
+        if self._turn == "WHITE":
+            self._turn = "BLACK"
+        else:
+            self._turn = "WHITE"
+
+
 
     def show_board(self):
         """
@@ -116,7 +172,7 @@ class ChessPiece:
     """
     This class will act as a parent class for each different chess piece. Each child class will have a different "name"
     that is one letter. If the piece's color is Black, said letter will be uppercase. For example the black kings name
-    will be "K", and the white king will be "k".
+    will be "K", and the white kings name will be "k".
 
     The point of having this parent class is to not have to write each get method for the child classes. Also, because
     each piece has different allowed moves, the is_move_legal method will work differently for each class but will
@@ -129,23 +185,26 @@ class ChessPiece:
 
     def get_has_moved(self):
         """
-        returns True if the piece has moved and False if it hasn't
+        :return: True if the piece has moved and False if it hasn't
         """
         return self._has_moved
 
     def set_has_moved(self):
         """
-        sets the objects has_moved status to true
+        Sets the objects has_moved status to true. Currently only being used for rooks.
         """
         self._has_moved = True
 
     def get_color(self):
         """
-        returns the color data member of the piece
+        :return: the color data member of the piece
         """
         return self._color
 
     def get_name(self):
+        """
+        :return: the name data member of the piece
+        """
         return self._name
 
 
@@ -159,10 +218,12 @@ class King(ChessPiece):
         super().__init__(color)
         self._name = "K" if color == "BLACK" else "k"
 
-    def is_move_legal(self, delta_x, delta_y):
+    def is_move_legal(self, start, end):
         """
-        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
-        being passed to this method
+        returns True if the move is legal, returns False if it is not.
+
+        :parameter start: the square the piece starts in, in algebraic notation as a string
+        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
         """
         return True
 
@@ -177,10 +238,12 @@ class Queen(ChessPiece):
         super().__init__(color)
         self._name = "Q" if color == "BLACK" else "q"
 
-    def is_move_legal(self, delta_x, delta_y):
+    def is_move_legal(self, start, end):
         """
-        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
-        being passed to this method
+        returns True if the move is legal, returns False if it is not.
+
+        :parameter start: the square the piece starts in, in algebraic notation as a string
+        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
         """
         return True
 
@@ -195,10 +258,12 @@ class Rook(ChessPiece):
         super().__init__(color)
         self._name = "R" if color == "BLACK" else "r"
 
-    def is_move_legal(self, delta_x, delta_y):
+    def is_move_legal(self, start, end):
         """
-        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
-        being passed to this method
+        returns True if the move is legal, returns False if it is not.
+
+        :parameter start: the square the piece starts in, in algebraic notation as a string
+        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
         """
         return True
 
@@ -213,10 +278,12 @@ class Bishop(ChessPiece):
         super().__init__(color)
         self._name = "B" if color == "BLACK" else "b"
 
-    def is_move_legal(self, delta_x, delta_y):
+    def is_move_legal(self, start, end):
         """
-        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
-        being passed to this method
+        returns True if the move is legal, returns False if it is not.
+
+        :parameter start: the square the piece starts in, in algebraic notation as a string
+        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
         """
         return True
 
@@ -232,10 +299,12 @@ class Knight(ChessPiece):
         super().__init__(color)
         self._name = "N" if color == "BLACK" else "n"
 
-    def is_move_legal(self, delta_x, delta_y):
+    def is_move_legal(self, start, end):
         """
-        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
-        being passed to this method
+        returns True if the move is legal, returns False if it is not.
+
+        :parameter start: the square the piece starts in, in algebraic notation as a string
+        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
         """
         return True
 
@@ -252,10 +321,12 @@ class Pawn(ChessPiece):
         super().__init__(color)
         self._name = "P" if color == "BLACK" else "p"
 
-    def is_move_legal(self, delta_x, delta_y):
+    def is_move_legal(self, start, end):
         """
-        returns True if the move is legal, returns False if it is not. The change in x and y must be calculated before
-        being passed to this method
+        returns True if the move is legal, returns False if it is not.
+
+        :parameter start: the square the piece starts in, in algebraic notation as a string
+        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
         """
         return True
 
@@ -265,8 +336,8 @@ def algebra_indices(square):
     Converts the given square into a list of indices to plug into the chess board. Because the representation of the
     board for the players is in algebraic notation and the program represents the board as a list of lists, we must
     convert the algebraic notation into indices for the boards list of lists. One thing to note is algebraic notation
-     puts the column first and the row second. This will return a list that has the row first and column second as that
-     is how the boards list of lists is used.
+    puts the column first and the row second. This will return a list that has the row first and column second as that
+    is how the boards list of lists is used.
 
     :parameter square: should be a string in algebraic notation.
     :returns: the equivalent representation as a list of integers
@@ -274,7 +345,7 @@ def algebra_indices(square):
     """
     temp_list = [7, 6, 5, 4, 3, 2, 1, 0]
     new_square = list(square)
-    new_square[0] = ord(new_square[0]) - 97
+    new_square[0] = ord(new_square[0]) - 97  # converts the letter to its unicode value, then makes it our index
     new_square[1] = temp_list[int(new_square[1]) - 1]
     new_square[0], new_square[1] = new_square[1], new_square[0]
 
@@ -283,3 +354,13 @@ def algebra_indices(square):
 
 game = ChessVar()
 game.show_board()
+print(game.get_turn())
+print('')
+print(game.get_piece_dict())
+print('')
+game.make_move("a1", "a7")
+print('')
+game.show_board()
+print(game.get_turn())
+print('')
+print(game.get_piece_dict())
