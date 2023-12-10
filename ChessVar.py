@@ -125,7 +125,7 @@ class ChessVar:
             return False
 
         # check if move is legal (also checks for obstructions excluding end location)
-        if not start_piece.is_move_legal(self._board, indices_start, indices_end):
+        if not start_piece.is_move_legal(list(self._board), indices_start, indices_end):
             return False
 
         # check final location for a piece.
@@ -246,7 +246,7 @@ class King(ChessPiece):
         """
         just has to check if we are attempting to move more than 1 square
 
-        :parameter board: the board we are testing as a list of lists
+        :parameter board: not used for this piece
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not. Does not check the final piece.
@@ -511,7 +511,7 @@ class Knight(ChessPiece):
         checks if the knight is trying to move in any other way than 2 up/down and 1 left/right or
         1 up/down and 2 left/right
 
-        :parameter board: the board we are testing as a list of lists
+        :parameter board: not used for this piece
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not. Does not check the final piece.
@@ -556,10 +556,29 @@ class Pawn(ChessPiece):
         """
         start_indices = start
         end_indices = end
-        temp_indices = list(start_indices)
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
 
+        if abs(delta_y) > 2:
+            return False
+        if abs(delta_x) > 2:
+            return False
+        if abs(delta_y) == 2 and self._has_moved:  # can only move 2 spaces on its first move
+            return False
+        if self._color == "BLACK" and delta_y < 0:  # black pieces can only move down
+            return False
+        if self._color == "WHITE" and delta_y > 0:
+            return False
+        if abs(delta_x) == 1 and abs(delta_y) == 1:  # if we are moving diagonally
+            if board[end_indices[0]][end_indices[1]] is None:
+                return False
+            if self._color == "WHITE" and board[start_indices[0]][start_indices[1]].get_color == "WHITE":
+                return False
+            if self._color == "BLACK" and board[start_indices[0]][start_indices[1]].get_color == "BLACK":
+                return False
+
+        if not self._has_moved:
+            self._has_moved = True
         return True
 
 
@@ -582,9 +601,3 @@ def algebra_indices(square):
     new_square[0], new_square[1] = new_square[1], new_square[0]
 
     return new_square
-
-
-board = ChessVar()
-board.show_board()
-print(board.make_move("d4", "b3"))
-board.show_board()
