@@ -104,7 +104,6 @@ class ChessVar:
         :parameter start: the square containing the piece we want to move in algebraic notation as a string
         :parameter end: the square we want to move the piece to in algebraic notation as a string
         """
-        print(f"from_square is {start} and to_square is {end}")
         # check game state
         if self._game_state != "UNFINISHED":
             return False
