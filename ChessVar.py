@@ -38,8 +38,8 @@ class ChessVar:
             [Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"),
              Pawn("BLACK")],
 
+            [Bishop("WHITE"), None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
-            [None, None, Rook("WHITE"), King("BLACK"), None, None, None, None],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
 
@@ -356,7 +356,11 @@ class Bishop(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-
+        First we check if the attempted move is moving the same amount on the x-axis as the y-axis. This ensures the
+        user is trying to move diagonally. If we don't pass this test, we return False. If we do pass, we then check
+        for obstructions. We first determine if we need to increment or decrement both the x and y indices. Then we do
+        so accordingly delta_x-1 times and check for an object in that square each time. We do this delta_x - 1 times
+        so that we only check the squares in between our start and end.
 
         :parameter board: the board we are testing given as a list of lists
         :parameter start: the square the piece starts in, in list notation
@@ -365,16 +369,50 @@ class Bishop(ChessPiece):
         """
         start_indices = start
         end_indices = end
-        delta_x = abs(end_indices[1] - start_indices[1])
-        delta_y = abs(end_indices[0] - start_indices[0])
+        temp_indices = list(start_indices)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
 
         # check if the absolute value of delta_x and delta_y are equal
-        if delta_x != delta_y:
+        if abs(delta_x) != abs(delta_y):
             return False
 
-        # need a loop that increments or decrements start_indices and end_indices at the same time, delta_x - 1 amount
-        # of times. has to figure out if it is incrementing both, decrementing both, or incrementing one and
-        # decrementing the other.
+        # determine which direction we are going and increment / decrement x and y accordingly
+        if delta_x > 0 and delta_y > 0:  # x & y incrementing, going down & right
+            for move in range(delta_x - 1):
+                temp_indices[1] += 1
+                temp_indices[0] += 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
+        elif delta_x > 0 > delta_y:  # x incrementing, y decrementing, going up & right
+            for move in range(delta_x - 1):
+                temp_indices[1] += 1
+                temp_indices[0] -= 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
+        elif delta_x < 0 < delta_y:  # x decrementing, y incrementing, going down & left
+            for move in range(delta_x - 1):
+                temp_indices[1] -= 1
+                temp_indices[0] += 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
+        else:  # x & y decrementing, going up & left
+            for move in range(delta_x - 1):
+                temp_indices[1] -= 1
+                temp_indices[0] -= 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
 
         return True
 
@@ -459,5 +497,5 @@ def algebra_indices(square):
 
 board = ChessVar()
 board.show_board()
-print(board.make_move("c5", "d5"))
+print(board.make_move("a6", "b5"))
 board.show_board()
