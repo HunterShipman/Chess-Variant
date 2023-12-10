@@ -617,7 +617,7 @@ def algebra_indices(square):
     """
     temp_list = [7, 6, 5, 4, 3, 2, 1, 0]
     new_square = list(square)
-    new_square[0] = ord(new_square[0]) - 97  # converts the letter to its ascii value, then makes it our index
+    new_square[0] = ord(new_square[0]) - 97  # converts the letter to its appropriate index
     new_square[1] = temp_list[int(new_square[1]) - 1]
     new_square[0], new_square[1] = new_square[1], new_square[0]
 
