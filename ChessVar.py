@@ -1,6 +1,6 @@
 # Author: Hunter Shipman
 # GitHub username: HunterShipman
-# Date: 12/9/2023
+# Date: 12/10/2023
 # Description:  A ChessVar class that will allow two players to play a derivative of chess. In this version of chess, a
 #               player wins by taking all of one type of chess piece. For example, you can win by taking both knights,
 #               every single pawn, or just the queen. Also, the king is not a special piece, it still moves like a king,
@@ -38,10 +38,10 @@ class ChessVar:
             [Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"),
              Pawn("BLACK")],
 
+            [Pawn("BLACK"), None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None],
+            [Pawn("WHITE"), None, None, None, None, None, None, None],
 
             [Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"), Pawn("WHITE"),
              Pawn("WHITE")],
@@ -126,6 +126,7 @@ class ChessVar:
             return False
 
         # check if move is legal (also checks for obstructions excluding end location)
+        # we pass a copy of the board list to ensure the board can't be altered somehow
         if not start_piece.is_move_legal(list(self._board), indices_start, indices_end):
             return False
 
@@ -552,7 +553,14 @@ class Pawn(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
+        First we check if the pawn is trying to move more than 2 spaces in any direction. Then we check if the pawn is
+        trying to move 2 spaces. If it is, we check if it isn't the pawns first turn, then we check for an obstruction.
+        Then we check if the pawn is moving in the wrong direction vertically (can't move backwards). If any of these
+        occur, we return false.
 
+        Then we check if the pawn is trying to move diagonally. If it is, we ensure that there is a piece of the
+        opposite color in the end square. If there is no space in the end square, or if the piece in the end square is
+        the same color, we return false.
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
@@ -568,8 +576,15 @@ class Pawn(ChessPiece):
             return False
         if abs(delta_x) > 2:
             return False
-        if abs(delta_y) == 2 and self._has_moved:  # can only move 2 spaces on its first move
-            return False
+        if abs(delta_y) == 2:  # if we are trying to move 2 spaces
+            if self._has_moved:
+                return False
+            if self._color == "WHITE":  # check for obstruction
+                if board[start_indices[0] - 1][start_indices[1]] is not None:
+                    return False
+            if self._color == "BLACK":
+                if board[start_indices[0] + 1][start_indices[1]] is not None:
+                    return False
         if self._color == "BLACK" and delta_y < 0:  # black pieces can only move down
             return False
         if self._color == "WHITE" and delta_y > 0:
@@ -581,6 +596,8 @@ class Pawn(ChessPiece):
                 return False
             if self._color == "BLACK" and board[start_indices[0]][start_indices[1]].get_color == "BLACK":
                 return False
+        elif board[end_indices[0]][end_indices[1]] is not None:  # if trying to capture vertically
+            return False
 
         if not self._has_moved:
             self._has_moved = True
