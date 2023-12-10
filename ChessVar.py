@@ -306,61 +306,63 @@ class Queen(ChessPiece):
 
         # code for moving horizontal or vertical
         #
-        # if we are trying to move horizontally
-        if len(between_x) != 0:
-            for x in between_x:  # we want to exclude the start and end square
-                if board[start_indices[0]][x] is None:
-                    pass
-                else:
-                    return False
+        if x1 == x2 or y1 == y2:
+            # if we are trying to move horizontally
+            if len(between_x) != 0:
+                for x in between_x:  # we want to exclude the start and end square
+                    if board[start_indices[0]][x] is None:
+                        pass
+                    else:
+                        return False
 
-        # if we are trying to move vertically
-        elif len(between_y) != 0:
-            for y in between_y:  # we want to exclude the current last square
-                if board[y][start_indices[1]] is None:
-                    pass
-                else:
-                    return False
+            # if we are trying to move vertically
+            elif len(between_y) != 0:
+                for y in between_y:  # we want to exclude the current last square
+                    if board[y][start_indices[1]] is None:
+                        pass
+                    else:
+                        return False
 
 
         # code for moving diagonally
         #
-        # determine which direction we are going and increment / decrement x and y accordingly
-        if delta_x > 0 and delta_y > 0:  # x & y incrementing, going down & right
-            for move in range(delta_x - 1):
-                temp_indices[1] += 1
-                temp_indices[0] += 1
-                if board[temp_indices[0]][temp_indices[1]] is None:
-                    pass
-                else:
-                    return False
+        else:
+            # determine which direction we are going and increment / decrement x and y accordingly
+            if delta_x > 0 and delta_y > 0:  # x & y incrementing, going down & right
+                for move in range(delta_x - 1):
+                    temp_indices[1] += 1
+                    temp_indices[0] += 1
+                    if board[temp_indices[0]][temp_indices[1]] is None:
+                        pass
+                    else:
+                        return False
 
-        elif delta_x > 0 > delta_y:  # x incrementing, y decrementing, going up & right
-            for move in range(delta_x - 1):
-                temp_indices[1] += 1
-                temp_indices[0] -= 1
-                if board[temp_indices[0]][temp_indices[1]] is None:
-                    pass
-                else:
-                    return False
+            elif delta_x > 0 > delta_y:  # x incrementing, y decrementing, going up & right
+                for move in range(delta_x - 1):
+                    temp_indices[1] += 1
+                    temp_indices[0] -= 1
+                    if board[temp_indices[0]][temp_indices[1]] is None:
+                        pass
+                    else:
+                        return False
 
-        elif delta_x < 0 < delta_y:  # x decrementing, y incrementing, going down & left
-            for move in range(delta_x - 1):
-                temp_indices[1] -= 1
-                temp_indices[0] += 1
-                if board[temp_indices[0]][temp_indices[1]] is None:
-                    pass
-                else:
-                    return False
+            elif delta_x < 0 < delta_y:  # x decrementing, y incrementing, going down & left
+                for move in range(delta_x - 1):
+                    temp_indices[1] -= 1
+                    temp_indices[0] += 1
+                    if board[temp_indices[0]][temp_indices[1]] is None:
+                        pass
+                    else:
+                        return False
 
-        elif delta_x < 0 and delta_y < 0:  # x & y decrementing, going up & left
-            for move in range(delta_x - 1):
-                temp_indices[1] -= 1
-                temp_indices[0] -= 1
-                if board[temp_indices[0]][temp_indices[1]] is None:
-                    pass
-                else:
-                    return False
+            elif delta_x < 0 and delta_y < 0:  # x & y decrementing, going up & left
+                for move in range(delta_x - 1):
+                    temp_indices[1] -= 1
+                    temp_indices[0] -= 1
+                    if board[temp_indices[0]][temp_indices[1]] is None:
+                        pass
+                    else:
+                        return False
 
         return True
 
