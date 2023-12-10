@@ -604,24 +604,3 @@ def algebra_indices(square):
     new_square[0], new_square[1] = new_square[1], new_square[0]
 
     return new_square
-
-board = ChessVar()
-board.show_board()
-print(board.make_move("a2", "a4"))
-board.show_board()
-print(board.make_move("h7", "h4"))
-board.show_board()
-print(board.make_move("e7", "e6"))
-board.show_board()
-print(board.make_move("e2", "d3"))
-board.show_board()
-print(board.make_move("a1", "a5"))
-board.show_board()
-print(board.make_move("a1", "a3"))
-board.show_board()
-print(board.make_move("f8", "h6"))
-board.show_board()
-print(board.make_move("f8", "c5"))
-board.show_board()
-print(board.make_move("a3", "b4"))
-board.show_board()
