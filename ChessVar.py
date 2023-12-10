@@ -39,7 +39,7 @@ class ChessVar:
              Pawn("BLACK")],
 
             [None, None, None, None, None, None, None, None],
-            [None, None, None, None, None, None, None, None],
+            [None, None, Rook("WHITE"), King("BLACK"), None, None, None, None],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
 
@@ -92,7 +92,8 @@ class ChessVar:
         """
         First checks if a player has won the game. Then checks if there is a piece in the starting square. Then checks
         if the starting and ending squares are the same. Then checks if the piece in the starting square is the
-        opponents color. Then checks if the move is illegal. If any of these occur we return False.
+        opponents color. Then checks if the move is illegal or if there are any obstructions. If any of these occur we
+        return False.
 
         If we pass all of those tests, we then check the end square for a piece. If an opposing piece is occupying the
         end square, that piece is captured. If a piece of the same color is occupying the end square, we return false.
@@ -107,8 +108,10 @@ class ChessVar:
         if self._game_state != "UNFINISHED":
             return False
 
-        # check if there is a piece in the square
+        indices_end = algebra_indices(end)
         indices_start = algebra_indices(start)
+
+        # check if there is a piece in the start square
         start_piece = self._board[indices_start[0]][indices_start[1]]
         if start_piece is None:
             return False
@@ -122,7 +125,6 @@ class ChessVar:
             return False
 
         # check if move is legal (also checks for obstructions excluding end location)
-        indices_end = algebra_indices(end)
         if not start_piece.is_move_legal(self._board, indices_start, indices_end):
             return False
 
@@ -242,17 +244,17 @@ class King(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-        returns True if the move is legal, returns False if it is not.
+
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
-        :return: True if move is legal, False if not.
+        :return: True if move is legal, False if not. Does not check the final piece.
         """
         start_indices = start
         end_indices = end
-        delta_x = end_indices[1] - start_indices[1]
-        delta_y = end_indices[0] - start_indices[0]
+        delta_x = abs(end_indices[1] - start_indices[1])
+        delta_y = abs(end_indices[0] - start_indices[0])
 
         return True
 
@@ -269,17 +271,17 @@ class Queen(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-        returns True if the move is legal, returns False if it is not.
+
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
-        :return: True if move is legal, False if not.
+        :return: True if move is legal, False if not. Does not check the final piece.
         """
         start_indices = start
         end_indices = end
-        delta_x = end_indices[1] - start_indices[1]
-        delta_y = end_indices[0] - start_indices[0]
+        delta_x = abs(end_indices[1] - start_indices[1])
+        delta_y = abs(end_indices[0] - start_indices[0])
 
         return True
 
@@ -304,11 +306,10 @@ class Rook(ChessPiece):
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
-        :return: True if move is legal, False if not.
+        :return: True if move is legal, False if not. Does not check the final piece.
         """
         start_indices = start
         end_indices = end
-
         x1, x2 = start_indices[1], end_indices[1]
         y1, y2 = end_indices[0], start_indices[0]
 
@@ -355,17 +356,25 @@ class Bishop(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-        returns True if the move is legal, returns False if it is not.
+
 
         :parameter board: the board we are testing given as a list of lists
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
-        :return: True if move is legal, False if not.
+        :return: True if move is legal, False if not. Does not check the final piece.
         """
         start_indices = start
         end_indices = end
-        delta_x = end_indices[1] - start_indices[1]
-        delta_y = end_indices[0] - start_indices[0]
+        delta_x = abs(end_indices[1] - start_indices[1])
+        delta_y = abs(end_indices[0] - start_indices[0])
+
+        # check if the absolute value of delta_x and delta_y are equal
+        if delta_x != delta_y:
+            return False
+
+        # need a loop that increments or decrements start_indices and end_indices at the same time, delta_x - 1 amount
+        # of times. has to figure out if it is incrementing both, decrementing both, or incrementing one and
+        # decrementing the other.
 
         return True
 
@@ -383,12 +392,12 @@ class Knight(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-        returns True if the move is legal, returns False if it is not.
+
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
-        :return: True if move is legal, False if not.
+        :return: True if move is legal, False if not. Does not check the final piece.
         """
         start_indices = start
         end_indices = end
@@ -412,17 +421,17 @@ class Pawn(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-        returns True if the move is legal, returns False if it is not.
+
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
         :parameter end: the square we are attempting to move the piece to in list notation
-        :return: True if move is legal, False if not.
+        :return: True if move is legal, False if not. Does not check the final piece.
         """
         start_indices = start
         end_indices = end
-        delta_x = end_indices[1] - start_indices[1]
-        delta_y = end_indices[0] - start_indices[0]
+        delta_x = abs(end_indices[1] - start_indices[1])
+        delta_y = abs(end_indices[0] - start_indices[0])
 
         return True
 
@@ -446,3 +455,9 @@ def algebra_indices(square):
     new_square[0], new_square[1] = new_square[1], new_square[0]
 
     return new_square
+
+
+board = ChessVar()
+board.show_board()
+print(board.make_move("c5", "d5"))
+board.show_board()
