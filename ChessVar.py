@@ -389,6 +389,8 @@ class Rook(ChessPiece):
         """
         start_indices = start
         end_indices = end
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
         x1, x2 = start_indices[1], end_indices[1]
         y1, y2 = end_indices[0], start_indices[0]
 
@@ -401,7 +403,7 @@ class Rook(ChessPiece):
         between_y = list(range(y1 + 1, y2))
 
         # if we are trying to move both vertically and horizontally
-        if len(between_x) > 0 and len(between_y) > 0:
+        if abs(delta_x) > 0 and abs(delta_y) > 0:
             return False
 
         # if we are trying to move horizontally
@@ -602,3 +604,24 @@ def algebra_indices(square):
     new_square[0], new_square[1] = new_square[1], new_square[0]
 
     return new_square
+
+board = ChessVar()
+board.show_board()
+print(board.make_move("a2", "a4"))
+board.show_board()
+print(board.make_move("h7", "h4"))
+board.show_board()
+print(board.make_move("e7", "e6"))
+board.show_board()
+print(board.make_move("e2", "d3"))
+board.show_board()
+print(board.make_move("a1", "a5"))
+board.show_board()
+print(board.make_move("a1", "a3"))
+board.show_board()
+print(board.make_move("f8", "h6"))
+board.show_board()
+print(board.make_move("f8", "c5"))
+board.show_board()
+print(board.make_move("a3", "b4"))
+board.show_board()
