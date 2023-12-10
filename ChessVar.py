@@ -38,7 +38,7 @@ class ChessVar:
             [Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"), Pawn("BLACK"),
              Pawn("BLACK")],
 
-            [Bishop("WHITE"), None, None, None, None, None, None, None],
+            [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
@@ -244,7 +244,7 @@ class King(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-
+        just has to check if we are attempting to move more than 1 square
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
@@ -253,8 +253,11 @@ class King(ChessPiece):
         """
         start_indices = start
         end_indices = end
-        delta_x = abs(end_indices[1] - start_indices[1])
-        delta_y = abs(end_indices[0] - start_indices[0])
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
+
+        if abs(delta_x) > 1 or abs(delta_y) > 1:
+            return False
 
         return True
 
@@ -271,7 +274,7 @@ class Queen(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-
+        Implements systems from Rook and Bishop to determine if a move is legal.
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
@@ -280,8 +283,83 @@ class Queen(ChessPiece):
         """
         start_indices = start
         end_indices = end
-        delta_x = abs(end_indices[1] - start_indices[1])
-        delta_y = abs(end_indices[0] - start_indices[0])
+        temp_indices = list(start_indices)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
+        x1, x2 = start_indices[1], end_indices[1]
+        y1, y2 = end_indices[0], start_indices[0]
+
+        if x1 > x2:
+            x1, x2 = x2, x1  # need lower value to be first for range() to work
+        if y1 > y2:
+            y1, y2 = y2, y1
+
+        between_x = list(range(x1 + 1, x2))  # list of x values between our starting and ending x
+        between_y = list(range(y1 + 1, y2))
+
+        # check if we aren't moving perfectly diagonally or perfectly horizontal/vertical
+        if abs(delta_x) != abs(delta_y):
+            if x1 != x2 and y1 != y2:
+                return False
+            pass
+
+        # code for moving horizontal or vertical
+        #
+        # if we are trying to move horizontally
+        if len(between_x) != 0:
+            for x in between_x:  # we want to exclude the start and end square
+                if board[start_indices[0]][x] is None:
+                    pass
+                else:
+                    return False
+
+        # if we are trying to move vertically
+        elif len(between_y) != 0:
+            for y in between_y:  # we want to exclude the current last square
+                if board[y][start_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
+
+        # code for moving diagonally
+        #
+        # determine which direction we are going and increment / decrement x and y accordingly
+        if delta_x > 0 and delta_y > 0:  # x & y incrementing, going down & right
+            for move in range(delta_x - 1):
+                temp_indices[1] += 1
+                temp_indices[0] += 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
+        elif delta_x > 0 > delta_y:  # x incrementing, y decrementing, going up & right
+            for move in range(delta_x - 1):
+                temp_indices[1] += 1
+                temp_indices[0] -= 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
+        elif delta_x < 0 < delta_y:  # x decrementing, y incrementing, going down & left
+            for move in range(delta_x - 1):
+                temp_indices[1] -= 1
+                temp_indices[0] += 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
+
+        elif delta_x < 0 and delta_y < 0:  # x & y decrementing, going up & left
+            for move in range(delta_x - 1):
+                temp_indices[1] -= 1
+                temp_indices[0] -= 1
+                if board[temp_indices[0]][temp_indices[1]] is None:
+                    pass
+                else:
+                    return False
 
         return True
 
@@ -373,7 +451,7 @@ class Bishop(ChessPiece):
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
 
-        # check if the absolute value of delta_x and delta_y are equal
+        # check if we aren't moving perfectly diagonally
         if abs(delta_x) != abs(delta_y):
             return False
 
@@ -430,7 +508,8 @@ class Knight(ChessPiece):
 
     def is_move_legal(self, board, start, end):
         """
-
+        checks if the knight is trying to move in any other way than 2 up/down and 1 left/right or
+        1 up/down and 2 left/right
 
         :parameter board: the board we are testing as a list of lists
         :parameter start: the square the piece starts in, in list notation
@@ -441,6 +520,15 @@ class Knight(ChessPiece):
         end_indices = end
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
+
+        if abs(delta_x) == 1 and abs(delta_y) != 2:
+            return False
+        if abs(delta_x) == 2 and abs(delta_y) != 1:
+            return False
+        if abs(delta_y) == 1 and abs(delta_x) !=2:
+            return False
+        if abs(delta_y) == 2 and abs(delta_x) != 1:
+            return False
 
         return True
 
@@ -468,8 +556,9 @@ class Pawn(ChessPiece):
         """
         start_indices = start
         end_indices = end
-        delta_x = abs(end_indices[1] - start_indices[1])
-        delta_y = abs(end_indices[0] - start_indices[0])
+        temp_indices = list(start_indices)
+        delta_x = end_indices[1] - start_indices[1]
+        delta_y = end_indices[0] - start_indices[0]
 
         return True
 
@@ -497,5 +586,5 @@ def algebra_indices(square):
 
 board = ChessVar()
 board.show_board()
-print(board.make_move("a6", "b5"))
+print(board.make_move("d4", "b3"))
 board.show_board()
