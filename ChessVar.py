@@ -1,6 +1,6 @@
 # Author: Hunter Shipman
 # GitHub username: HunterShipman
-# Date: 11/30/2023
+# Date: 12/9/2023
 # Description:  A ChessVar class that will allow two players to play a derivative of chess. In this version of chess, a
 #               player wins by taking all of one type of chess piece. For example, you can win by taking both knights,
 #               every single pawn, or just the queen. Also, the king is not a special piece, it still moves like a king,
@@ -15,9 +15,8 @@ class ChessVar:
     It will communicate with the children of the ChessPiece class to determine different aspects of a
     specific chess piece, such as the chess pieces name and if the attempted move is legal or not.
 
-    Known ways to improve: 1. Make _piece_dict keys the same chess piece objects that are in the board. Then checking if
-                           each pieces count is greater than 1 could be less jerry rigged and would still work if you
-                           were to change the amount of pieces on the board.
+    Capital letters are black pieces and lowercase letters are white pieces.
+        R = Rook, N = Knight, B = Bishop, Q = Queen, K = King, P = Pawn.
 
     _piece_dict: represents all the pieces left on the board. Once a specific pieces count has dropped to 0, the
                  opposing player has won
@@ -40,7 +39,7 @@ class ChessVar:
              Pawn("BLACK")],
 
             [None, None, None, None, None, None, None, None],
-            [Rook("WHITE"), None, None, None, None, None, None, King("BLACK")],
+            [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
             [None, None, None, None, None, None, None, None],
 
@@ -95,10 +94,11 @@ class ChessVar:
         if the starting and ending squares are the same. Then checks if the piece in the starting square is the
         opponents color. Then checks if the move is illegal. If any of these occur we return False.
 
-        If we pass all of those tests, then we make the move and return True. If an opposing piece is occupying the end
-        square, that piece is captured. When a piece is captured we decrement its count from the boards _piece_dict data
-        member and replace it on the board with the capturing piece. If doing so makes the specific pieces count 0, then
-        the player whose turn it is will have won and the boards _game_state will be changed to reflect that.
+        If we pass all of those tests, we then check the end square for a piece. If an opposing piece is occupying the
+        end square, that piece is captured. If a piece of the same color is occupying the end square, we return false.
+        When a piece is captured we decrement its count from the boards _piece_dict data member and replace it on the
+        board with the capturing piece. If doing so makes the specific pieces count 0, then the player whose turn it is
+        will have won and the boards _game_state will be changed to reflect that.
 
         :parameter start: the square containing the piece we want to move in algebraic notation as a string
         :parameter end: the square we want to move the piece to in algebraic notation as a string
@@ -108,7 +108,7 @@ class ChessVar:
             return False
 
         # check if there is a piece in the square
-        indices_start = algebra_indices(start)  # looks like [x, y]
+        indices_start = algebra_indices(start)
         start_piece = self._board[indices_start[0]][indices_start[1]]
         if start_piece is None:
             return False
@@ -122,18 +122,18 @@ class ChessVar:
             return False
 
         # check if move is legal (also checks for obstructions excluding end location)
-        if not start_piece.is_move_legal(self._board, start, end):
+        indices_end = algebra_indices(end)
+        if not start_piece.is_move_legal(self._board, indices_start, indices_end):
             return False
 
         # check final location for a piece.
-        indices_end = algebra_indices(end)  # looks like [x, y]
         end_piece = self._board[indices_end[0]][indices_end[1]]
         if end_piece is None:  # if no piece, skip
             pass
         else:
             if end_piece.get_color() == self._turn:  # if end square has a piece of the players own color
                 return False
-            else:  # if end square is opponents color
+            else:  # if end square is opponents color, capture it
                 piece_name = end_piece.get_name()
                 self._piece_dict[piece_name] -= 1
 
@@ -192,15 +192,12 @@ class ChessVar:
 class ChessPiece:
     """
     This class will act as a parent class for each different chess piece. Each child class will have a different "name"
-    that is one letter. If the piece's color is Black, said letter will be uppercase. For example the black kings name
-    will be "K", and the white kings name will be "k".
+     data member that is one letter. If the piece's color is Black, said letter will be uppercase. For example the black
+    kings name will be "K", and the white kings name will be "k".
 
     The point of having this parent class is to not have to write each get method for the child classes. Also, because
     each piece has different allowed moves, the is_move_legal method will work differently for each class but will
     always return True or False. This allows us to use polymorphism when checking if a pieces attempted move is legal.
-
-    Known ways to improve: 1. Pass each child classes is_move_legal method the already converted algebraic notation ->
-                           indices. This would make us only have to run algebra_indices once per move.
     """
     def __init__(self, color):
         self._name = None  # will be overriden by child
@@ -248,12 +245,12 @@ class King(ChessPiece):
         returns True if the move is legal, returns False if it is not.
 
         :parameter board: the board we are testing as a list of lists
-        :parameter start: the square the piece starts in, in algebraic notation as a string
-        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :parameter start: the square the piece starts in, in list notation
+        :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not.
         """
-        start_indices = algebra_indices(start)
-        end_indices = algebra_indices(end)
+        start_indices = start
+        end_indices = end
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
 
@@ -275,12 +272,12 @@ class Queen(ChessPiece):
         returns True if the move is legal, returns False if it is not.
 
         :parameter board: the board we are testing as a list of lists
-        :parameter start: the square the piece starts in, in algebraic notation as a string
-        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :parameter start: the square the piece starts in, in list notation
+        :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not.
         """
-        start_indices = algebra_indices(start)
-        end_indices = algebra_indices(end)
+        start_indices = start
+        end_indices = end
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
 
@@ -305,18 +302,18 @@ class Rook(ChessPiece):
         we are trying to move horizontally. If there are no objects in our path, we return True.
 
         :parameter board: the board we are testing as a list of lists
-        :parameter start: the square the piece starts in, in algebraic notation as a string
-        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :parameter start: the square the piece starts in, in list notation
+        :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not.
         """
-        start_indices = algebra_indices(start)
-        end_indices = algebra_indices(end)
+        start_indices = start
+        end_indices = end
 
         x1, x2 = start_indices[1], end_indices[1]
         y1, y2 = end_indices[0], start_indices[0]
 
         if x1 > x2:
-            x1, x2 = x2, x1  # have to swap for range() to work
+            x1, x2 = x2, x1  # need lower value to be first for range() to work
         if y1 > y2:
             y1, y2 = y2, y1
 
@@ -329,7 +326,7 @@ class Rook(ChessPiece):
 
         # if we are trying to move horizontally
         if len(between_x) != 0:
-            for x in between_x:  # we want to exclude the current and last square
+            for x in between_x:  # we want to exclude the start and end square
                 if board[start_indices[0]][x] is None:
                     pass
                 else:
@@ -360,13 +357,13 @@ class Bishop(ChessPiece):
         """
         returns True if the move is legal, returns False if it is not.
 
-        :parameter board: the board we are testing as a list of lists
-        :parameter start: the square the piece starts in, in algebraic notation as a string
-        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :parameter board: the board we are testing given as a list of lists
+        :parameter start: the square the piece starts in, in list notation
+        :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not.
         """
-        start_indices = algebra_indices(start)
-        end_indices = algebra_indices(end)
+        start_indices = start
+        end_indices = end
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
 
@@ -389,12 +386,12 @@ class Knight(ChessPiece):
         returns True if the move is legal, returns False if it is not.
 
         :parameter board: the board we are testing as a list of lists
-        :parameter start: the square the piece starts in, in algebraic notation as a string
-        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :parameter start: the square the piece starts in, in list notation
+        :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not.
         """
-        start_indices = algebra_indices(start)
-        end_indices = algebra_indices(end)
+        start_indices = start
+        end_indices = end
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
 
@@ -418,12 +415,12 @@ class Pawn(ChessPiece):
         returns True if the move is legal, returns False if it is not.
 
         :parameter board: the board we are testing as a list of lists
-        :parameter start: the square the piece starts in, in algebraic notation as a string
-        :parameter end: the square we are attempting to move the piece to in algebraic notation as a string
+        :parameter start: the square the piece starts in, in list notation
+        :parameter end: the square we are attempting to move the piece to in list notation
         :return: True if move is legal, False if not.
         """
-        start_indices = algebra_indices(start)
-        end_indices = algebra_indices(end)
+        start_indices = start
+        end_indices = end
         delta_x = end_indices[1] - start_indices[1]
         delta_y = end_indices[0] - start_indices[0]
 
@@ -434,33 +431,18 @@ def algebra_indices(square):
     """
     Converts the given square into a list of indices to plug into the chess board. Because the representation of the
     board for the players is in algebraic notation and the program represents the board as a list of lists, we must
-    convert the algebraic notation into indices for the boards list of lists. One thing to note is algebraic notation
-    puts the column first and the row second. This will return a list that has the row first and column second as that
-    is how the boards list of lists is used.
+    convert the algebraic notation into "list notation". One thing to note is algebraic notation puts the column first
+    and the row second, also the rows in algebraic notation go bottom to top and start at 1. List notation has the
+    row first starting at 0 and going top down, and then the column second also starting at 0 going from left to right.
+    In short, algebraic notation is in (x, y) and list notation is in (y, x)
 
     :parameter square: should be a string in algebraic notation.
-    :returns: the equivalent representation as a list of integers
-    EX: "d6" is returned as [2, 3]
+    :returns a list: the equivalent "list notation" of the algebraic notation. EX: "d6" is returned as [2, 3]
     """
     temp_list = [7, 6, 5, 4, 3, 2, 1, 0]
     new_square = list(square)
-    new_square[0] = ord(new_square[0]) - 97  # converts the letter to its unicode value, then makes it our index
+    new_square[0] = ord(new_square[0]) - 97  # converts the letter to its ascii value, then makes it our index
     new_square[1] = temp_list[int(new_square[1]) - 1]
     new_square[0], new_square[1] = new_square[1], new_square[0]
 
     return new_square
-
-
-game = ChessVar()
-game.show_board()
-print(game.get_turn())
-print('')
-print(game.get_piece_dict())
-print('')
-print(game.make_move("a5", "b5"))
-print('')
-game.show_board()
-print(game.get_turn())
-print('')
-print(game.get_piece_dict())
-print(game.get_game_state())
